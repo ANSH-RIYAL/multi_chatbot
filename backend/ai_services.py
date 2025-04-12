@@ -14,6 +14,9 @@ class AIServices:
         self.gemini_model = None
         self.gemini_chat = None
         self.grok_api_key = None
+        self.feedback_db = {}  # Simple in-memory storage for feedback
+        self.cost_tracker = {}  # Track API costs
+        self.ab_testing = True  # Enable A/B testing
 
     def setup_openai(self, api_key: str):
         """Setup OpenAI client with API key"""
@@ -98,4 +101,54 @@ class AIServices:
         responses["gemini"] = await self.get_gemini_response(message)
         responses["grok"] = await self.get_grok_response(message)
         
-        return responses 
+        return responses
+
+    async def get_response(self, message: str, service: str) -> str:
+        # Track API call
+        self._track_api_call(service)
+        
+        # Get response from service
+        response = await self._call_service(service, message)
+        
+        # If A/B testing is enabled, randomly select response format
+        if self.ab_testing:
+            response = self._apply_ab_testing(response)
+            
+        return response
+    
+    def _track_api_call(self, service: str):
+        """Track API calls and costs"""
+        if service not in self.cost_tracker:
+            self.cost_tracker[service] = {
+                'calls': 0,
+                'total_cost': 0.0
+            }
+        self.cost_tracker[service]['calls'] += 1
+        # Add actual cost calculation based on service pricing
+        
+    def _apply_ab_testing(self, response: str) -> str:
+        """Apply A/B testing variations to response"""
+        import random
+        if random.random() < 0.5:  # 50% chance for each variation
+            return response.upper()  # Variation A
+        return response.lower()  # Variation B
+        
+    def record_feedback(self, message_id: str, service: str, feedback: str):
+        """Record user feedback for a response"""
+        if message_id not in self.feedback_db:
+            self.feedback_db[message_id] = {}
+        self.feedback_db[message_id][service] = feedback
+        
+    def get_performance_metrics(self) -> dict:
+        """Get performance metrics for all services"""
+        metrics = {
+            'total_calls': sum(service['calls'] for service in self.cost_tracker.values()),
+            'total_cost': sum(service['total_cost'] for service in self.cost_tracker.values()),
+            'feedback_summary': {
+                'positive': sum(1 for feedbacks in self.feedback_db.values() 
+                              for feedback in feedbacks.values() if feedback == 'positive'),
+                'negative': sum(1 for feedbacks in self.feedback_db.values() 
+                              for feedback in feedbacks.values() if feedback == 'negative')
+            }
+        }
+        return metrics 

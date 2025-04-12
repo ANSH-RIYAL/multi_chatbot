@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, status, Request
+from fastapi import FastAPI, HTTPException, status, Request, Depends
 import logging
 from dotenv import load_dotenv
 from typing import Dict, Optional, List
@@ -262,6 +262,22 @@ async def select_response(entry: HistoryEntry):
 async def get_history(user_id: str):
     """Get conversation history"""
     return load_history(user_id)
+
+@app.post("/api/feedback")
+async def record_feedback(
+    message_id: str,
+    service: str,
+    feedback: str,
+    ai_service: AIService = Depends(get_ai_service)
+):
+    """Record user feedback for a response"""
+    ai_service.record_feedback(message_id, service, feedback)
+    return {"status": "success"}
+
+@app.get("/api/metrics")
+async def get_metrics(ai_service: AIService = Depends(get_ai_service)):
+    """Get performance metrics for all services"""
+    return ai_service.get_performance_metrics()
 
 if __name__ == "__main__":
     import uvicorn

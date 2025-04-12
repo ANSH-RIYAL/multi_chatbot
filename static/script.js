@@ -125,4 +125,58 @@ function addMessageToHistory(role, content, model = null) {
     messageDiv.appendChild(contentDiv);
     chatHistoryDiv.appendChild(messageDiv);
     chatHistoryDiv.scrollTop = chatHistoryDiv.scrollHeight;
-} 
+}
+
+async function recordFeedback(messageId, service, feedback) {
+    try {
+        const response = await fetch('/api/feedback', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                message_id: messageId,
+                service: service,
+                feedback: feedback
+            })
+        });
+        
+        if (response.ok) {
+            updateMetrics();
+        }
+    } catch (error) {
+        console.error('Error recording feedback:', error);
+    }
+}
+
+async function updateMetrics() {
+    try {
+        const response = await fetch('/api/metrics');
+        const metrics = await response.json();
+        
+        const metricsDisplay = document.getElementById('metrics-display');
+        metricsDisplay.innerHTML = `
+            <div class="metric">
+                <span>Total API Calls:</span>
+                <span>${metrics.total_calls}</span>
+            </div>
+            <div class="metric">
+                <span>Total Cost:</span>
+                <span>$${metrics.total_cost.toFixed(2)}</span>
+            </div>
+            <div class="metric">
+                <span>Positive Feedback:</span>
+                <span>${metrics.feedback_summary.positive}</span>
+            </div>
+            <div class="metric">
+                <span>Negative Feedback:</span>
+                <span>${metrics.feedback_summary.negative}</span>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error updating metrics:', error);
+    }
+}
+
+// Update metrics every 30 seconds
+setInterval(updateMetrics, 30000); 

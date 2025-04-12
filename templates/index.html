@@ -135,6 +135,26 @@
         </div>
     </div>
 
+    <div class="response-container">
+        <div class="response" id="response-{{ service }}">
+            <div class="response-header">
+                <h3>{{ service }}</h3>
+                <div class="feedback-buttons">
+                    <button onclick="recordFeedback('{{ message_id }}', '{{ service }}', 'positive')">👍</button>
+                    <button onclick="recordFeedback('{{ message_id }}', '{{ service }}', 'negative')">👎</button>
+                </div>
+            </div>
+            <p>{{ response }}</p>
+        </div>
+    </div>
+
+    <div class="metrics-panel">
+        <h3>Performance Metrics</h3>
+        <div id="metrics-display">
+            <!-- Metrics will be populated here -->
+        </div>
+    </div>
+
     <script>
         let serviceKeys = {
             user_id: Math.random().toString(36).substring(7),
